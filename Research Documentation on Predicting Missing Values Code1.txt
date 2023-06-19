@@ -1,0 +1,459 @@
+This error message typically indicates that there are missing values, infinite values, or values that are too large in your data that are causing an issue with the dtype('float32') data type. 
+
+To fix this error, you should first identify where the NaN, infinity or large values are in your data. You can do this by using functions like `isnull()`, `isnan()`, and `isinf()` to check for missing values, NaN and infinite values respectively.
+
+Once you have identified the problematic values, you can either remove them using the `dropna()` or `fillna()` functions in Pandas or replace them with appropriate values depending on your use case. 
+
+For example, you could remove all rows with NaN or infinite values using the `dropna()` function:
+
+```python
+import pandas as pd
+
+# read in your data as a pandas dataframe
+df = pd.read_csv('your_data.csv')
+
+# drop all rows with NaN or infinite values
+df = df.dropna()
+df = df[~df.isin([np.nan, np.inf, -np.inf]).any(1)]
+```
+
+Alternatively, you could replace the missing values with a specified value using the `fillna()` function:
+
+```python
+import pandas as pd
+import numpy as np
+
+# read in your data as a pandas dataframe
+df = pd.read_csv('your_data.csv')
+
+# replace NaN and infinite values with 0
+df = df.fillna(0)
+df = df.replace([np.inf, -np.inf], 0)
+```
+
+Once you have dealt with the problematic values, you should be able to convert your data to dtype('float32') without encountering this error message.
+
+https://webapp.chatgpt4google.com/s/MTk3NzE3
+
+.....................................................
+
+# Convert the Series object to a NumPy array
+arr = y_train.to_numpy()
+
+# Reshape the array
+arr = arr.reshape(-1, 1)
+.....................................................
+
+# reset the indices of the arrays
+X_train.reset_index(drop=True, inplace=True)
+y_train.reset_index(drop=True, inplace=True)
+y_pred.reset_index(drop=True, inplace=True)
+
+# concatenate the arrays
+df_merged = np.concatenate((X_train, y_train.to_numpy().reshape(-1, 1), y_pred.reshape(-1, 1)), axis=1)
+
+# create a DataFrame from the concatenated array
+df_merged = pd.DataFrame(df_merged, columns=list(X_train.columns) + ['y_train', 'y_pred'])
+
+............................................................
+# convert the merged arrays into into a dataframe
+columns = ['Temp', 'rel_humidity', 'wind_speed', 'Hpa']
+df = pd.DataFrame(data = df_merged, columns = columns)
+
+..................................................................
+
+# Replace predicted values with actual test values
+y_test = y_test.values.reshape(-1,1) # Reshape y_test to match y_pred shape
+y_pred_df = pd.DataFrame(data=y_pred, columns=['Hpa'])
+y_test_df = pd.DataFrame(data=y_test, columns=['Hpa'])
+test_results = y_test_df.join(y_pred_df)
+
+# Merge back to X_test and then to X_train
+X_test_results = pd.concat([X_test.reset_index(drop=True), test_results], axis=1)
+merged_data = pd.concat([X_train, X_test_results], axis=0)
+
+...................................................................
+# Replace predicted values with actual test values
+y_test = y_test.reshape(-1,1) # Reshape y_test to match y_pred shape
+y_pred_df = pd.DataFrame(data=y_pred, columns=['y_pred'])
+y_test_df = pd.DataFrame(data=y_test, columns=['y_test'])
+test_results = y_test_df.join(y_pred_df)
+
+# Merge back to X_test and then to X_train
+
+X_test_results = pd.concat([X_test_df.reset_index(drop=True), test_results], axis=1)
+X_train_df = pd.DataFrame(data=X_train, columns=['Temp', 'rel_humidity', 'wind_speed'])
+
+# Merge back to X_test and then to X_train
+merged_data = X_train_df.merge(X_test_results, how='outer', on=['Temp', 'rel_humidity', 'wind_speed'], suffixes=('_train', '_test'))
+
+merged_data['Hpa'] = merged_data['Hpa_train'].fillna(merged_data['Hpa_test'])
+merged_data = merged_data.drop(['Hpa_train', 'Hpa_test'], axis=1)
+
+print(merged_data.columns)
+
+# Replace predicted values with actual test values
+y_test = y_test.reshape(-1,1) # Reshape y_test to match y_pred shape
+y_pred_df = pd.DataFrame(data=y_pred, columns=['Hpa_pred'])
+y_test_df = pd.DataFrame(data=y_test, columns=['y_test'])
+test_results = y_test_df.join(y_pred_df)
+
+# Merge back to X_test and then to X_train
+
+X_test_results = pd.concat([X_test_df.reset_index(drop=True), test_results], axis=1)
+X_train_df = pd.DataFrame(data=X_train, columns=['Temp', 'rel_humidity', 'wind_speed'])
+
+# Merge back to X_test and then to X_train
+merged_data = X_train_df.merge(X_test_results, how='outer', on=['Temp', 'rel_humidity', 'wind_speed'], suffixes=('_train', '_test'))
+
+merged_data['Hpa'] = merged_data['y_train'].fillna(merged_data['y_test'])
+merged_data = merged_data.drop(['y_train', 'y_test'], axis=1)
+
+print(merged_data.columns)
+...................................................
+from sklearn.impute import SimpleImputer
+imputer = SimpleImputer(strategy='mean')
+X_test_imputed = imputer.fit_transform(X_test)
+.........................................................................
+LINEAR REGRESSION ALGORTIHM
+# Split dataset into two parts: one with complete data and one with missing values
+complete_data = df.dropna()
+missing_data = df[df.isnull().any(axis=1)]
+
+# Train a decision tree regression model on the complete data to predict the missing values
+X_train = complete_data.drop(['Hpa', 'Temp', 'rel_humidity','wind_speed'], axis=1)
+y_train = complete_data[['Hpa', 'Temp', 'rel_humidity','wind_speed']]
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Impute missing values in X_test using mean imputation
+X_test = missing_data.drop(['Hpa', 'Temp', 'rel_humidity','wind_speed'], axis=1)
+
+from sklearn.impute import KNNImputer
+## Using KNN Imputer to imput missing values
+imputer = KNNImputer(n_neighbors = 5)
+X_test_imputed = imputer.fit_transform(X_test)
+
+# Use the trained model to predict the missing values in the imputed data
+y_pred = model.predict(X_test_imputed)
+
+# Join the predicted values back to the original dataset to create a new complete dataset without missing values
+missing_data[['Hpa', 'Temp', 'rel_humidity','wind_speed']] = y_pred
+new_data = pd.concat([complete_data, missing_data], axis=0)
+
+...................................................................
+DECISION TREE ALGORITHM
+
+from sklearn.impute import SimpleImputer
+
+# Split dataset into two parts: one with complete data and one with missing values
+X = df.dropna()
+y = df[df.isnull().any(axis=1)]
+
+# Train a decision tree regression model on the complete data to predict the missing values
+X_train = X.drop(['Hpa', 'Temp', 'rel_humidity','wind_speed'], axis=1)
+y_train = X[['Hpa', 'Temp', 'rel_humidity','wind_speed']]
+dc_model = DecisionTreeRegressor(random_state=42)
+dc_model.fit(X_train, y_train)
+
+# Impute missing values in X_test using mean imputation
+X_test = missing_data.drop(['Hpa', 'Temp', 'rel_humidity','wind_speed'], axis=1)
+
+from sklearn.impute import KNNImputer
+## Using KNN Imputer to imput missing values
+imputer = KNNImputer(n_neighbors = 5)
+X_test_imputed = imputer.fit_transform(X_test)
+
+# Use the trained model to predict the missing values in the imputed data
+y_pred = dc_model.predict(X_test_imputed)
+
+# Join the predicted values back to the original dataset to create a new complete dataset without missing values
+missing_data[['Hpa', 'Temp', 'rel_humidity','wind_speed']] = y_pred
+new_data = pd.concat([complete_data, missing_data], axis=0)
+
+...............................................................................................................
+
+# Filter the DataFrame to select only rows with index in 2013
+df_2013 = dff[dff.index.year == 2013]
+
+# Resample data to monthly frequency
+monthly_data = df_2013.resample('M').mean()
+
+# Plot monthly data for each variable with different line colors
+plt.plot(monthly_data['Hpa'], color='red', label='Hpa')
+plt.plot(monthly_data['Temp'], color='blue', label='Temperature')
+plt.plot(monthly_data['rel_humidity'], color='green', label='Relative Humidity')
+plt.plot(monthly_data['wind_speed'], color='orange', label='Wind Speed')
+
+plt.xlabel('Date')
+plt.ylabel('Value')
+plt.title('Monthly Weather Data - 2013')
+plt.legend()
+plt.show()
+
+........................................................................................................
+
+import matplotlib.pyplot as plt
+
+# Filter the data for specific hours, month, and year
+selected_hours = [8, 12, 16]  # Example: Selecting hours 8, 12, and 16
+selected_month = 5  # Example: Selecting June
+selected_year = 2023  # Example: Selecting year 2023
+
+filtered_data = dff[
+    (dff['datetime'].dt.hour.isin(selected_hours)) &
+    (dff['datetime'].dt.month == selected_month) &
+    (dff['datetime'].dt.year == selected_year)
+]
+
+# Group the filtered data by hour of the day
+hourly_data = filtered_data.groupby(filtered_data['datetime'].dt.hour)
+
+# Create a new figure and axes for the plot
+fig, ax = plt.subplots(figsize=(15, 8))
+
+# Check if there is data available for the selected criteria
+if not hourly_data.groups:
+    print("No data available for the selected criteria.")
+else:
+    # Plot density curve for 'Hpa' at each hour of the day
+    for hour, group in hourly_data:
+        group['Hpa'].plot(kind='density', ax=ax, label=f'Hour {hour}')
+
+    # Set labels and title for the plot
+    ax.set_xlabel('Hpa')
+    ax.set_ylabel('Density')
+    ax.set_title('Distribution of Hpa at Each Hour of the Day')
+
+    # Display legend
+    ax.legend()
+
+    # Show the plot
+    plt.show()
+
+................................................................................................................................
+
+# Create a sample of the data
+sample_data = dff.sample(frac=0.1, random_state=42)
+
+# Group the data by the hour of the day
+hourly_data = sample_data.groupby(sample_data['datetime'].dt.hour)
+
+# Create a new figure and axes for the plot
+fig, ax = plt.subplots(figsize=(15, 8))
+
+# Plot density curve for 'Hpa' at each hour of the day
+for hour, group in hourly_data:
+    group['Hpa'].plot(kind='density', ax=ax, label=f'Hour {hour}')
+
+# Set labels and title for the plot
+ax.set_xlabel('Hpa')
+ax.set_ylabel('Density')
+ax.set_title('Distribution of Hpa by Hour of the Day')
+
+# Display legend
+ax.legend()
+
+# Show the plot
+plt.show()
+
+
+..................................................................................................................
+
+# Distribution of Hpa Hourly
+
+# Group data by hour of the day
+hourly_data = dff.groupby(dff['datetime'].dt.hour)
+
+# Plot distribution curve for Hpa at each hour of the day
+hourly_data['Hpa'].plot(kind='density', legend=True, figsize=(15, 8))
+
+plt.xlabel('Hpa')
+plt.ylabel('Density')
+plt.title('Distribution of Hpa at Each Hour of the Day')
+plt.show()
+
+....................................................................................................................................
+
+from scipy.stats import gamma
+
+# Fit gamma distribution to Hpa data
+params = gamma.fit(dff['Hpa'])
+
+# Generate PDF of gamma distribution with fitted parameters
+pdf_x = np.linspace(dff['Hpa'].min(), dff['Hpa'].max(), 1000)
+pdf_y = gamma.pdf(pdf_x, *params)
+
+# Plot PDF of gamma distribution with fitted parameters
+plt.hist(dff['Hpa'], bins=50, density=True, alpha=0.5)
+plt.plot(pdf_x, pdf_y, 'r-', label='Gamma PDF')
+plt.xlabel('Hpa')
+plt.ylabel('Density')
+plt.legend()
+plt.show()
+
+......................................................................................................................
+
+import scipy.stats as stats
+
+# Fit lognormal distribution to Hpa data
+params = lognorm.fit(dff['Hpa'])
+
+# Generate lognormal distribution with fitted parameters
+ln_dist = lognorm(*params)
+
+# Perform CVM test on Hpa data and lognormal distribution
+result = stats.cramer_von_mises(dff['Hpa'], ln_dist.cdf)
+
+# Print test statistic and p-value
+print('Cramer-Von Mises test statistic:', result.statistic)
+print('p-value:', result.pvalue)
+
+# Interpret test result
+alpha = 0.05
+if result.pvalue > alpha:
+    print('Observed data is consistent with lognormal distribution (fail to reject H0)')
+else:
+    print('Observed data is not consistent with lognormal distribution (reject H0)')
+
+.............................................................................................................
+
+from sklearn.impute import KNNImputer
+from sklearn.metrics import mean_squared_error
+from scipy import interpolate
+
+# Split the dataset into training and testing sets
+train_data = df[['Hpa', 'Temp', 'rel_humidity','wind_speed']].sample(frac=0.8, random_state=1)
+test_data = df[['Hpa', 'Temp', 'rel_humidity','wind_speed']].drop(train_data.index)
+
+# KNN imputation
+imputer = KNNImputer(n_neighbors=5)
+train_imputed = imputer.fit_transform(train_data)
+test_imputed = imputer.transform(test_data)
+
+# Interpolation
+train_interpolated = train_data.interpolate(method='linear', axis=0)
+test_interpolated = test_data.interpolate(method='linear', axis=0)
+
+# Fit a machine learning model on training data with imputed values
+# For example:
+from sklearn.linear_model import LinearRegression
+model_imputed = LinearRegression().fit(train_imputed[:, :-1], train_imputed[:, -1])
+
+# Fit a machine learning model on training data with interpolated values
+# For example:
+model_interpolated = LinearRegression().fit(train_interpolated[:, :-1], train_interpolated[:, -1])
+
+# Evaluate the performance of the models on testing data using RMSE
+y_test = test_data.iloc[:, -1]
+y_pred_imputed = model_imputed.predict(test_imputed[:, :-1])
+y_pred_interpolated = model_interpolated.predict(test_interpolated[:, :-1])
+
+rmse_imputed = np.sqrt(mean_squared_error(y_test, y_pred_imputed))
+rmse_interpolated = np.sqrt(mean_squared_error(y_test, y_pred_interpolated))
+
+print("RMSE with KNN imputation:", rmse_imputed)
+print("RMSE with interpolation:", rmse_interpolated)
+
+..........................................................................................................
+
+
+Once you have split your data into a training set and a test set, the next steps typically involve:
+
+
+Preprocessing the data: It's common to preprocess the data before training a machine learning model. This may involve steps such as scaling the features, handling categorical variables, handling missing values (which you have already done), encoding categorical variables, or performing feature engineering to create new features.
+
+Selecting a model: Choose an appropriate machine learning model based on the problem you are trying to solve, the nature of your data, and your specific requirements. Consider models such as linear regression, decision trees, random forests, support vector machines, or neural networks, depending on the task (classification, regression, etc.) and the characteristics of your data.
+
+Training the model: Fit the selected model to the training data by calling the appropriate method, such as fit() in scikit-learn. Provide the training features (X_train) and the corresponding target values (y_train). The model will learn the patterns in the training data and adjust its parameters accordingly.
+
+Evaluating the model: Use the trained model to make predictions on the test set (X_test). Compare these predictions with the actual target values (y_test) to evaluate the performance of your model. Common evaluation metrics include accuracy, precision, recall, F1 score, mean squared error (MSE), or mean absolute error (MAE), depending on the problem type.
+
+Tuning and optimizing the model: If the performance of the model is not satisfactory, you can try optimizing its hyperparameters or exploring different model architectures. Use techniques such as cross-validation, grid search, or random search to find the best combination of hyperparameters that yields the best performance on unseen data.
+
+Making predictions: Once you are satisfied with the performance of your model, you can use it to make predictions on new, unseen data. Provide the necessary input features and use the predict() method of the trained model to obtain predictions.
+
+
+.................................................................................................................................................
+
+from sklearn.impute import KNNImputer
+from sklearn.metrics import mean_squared_error
+from scipy import interpolate
+import pandas as pd
+import numpy as np
+
+# Load your dataset into a Pandas DataFrame
+data = pd.read_csv('your_data.csv')
+
+# Split the dataset into training and testing sets
+train_data = data.sample(frac=0.8, random_state=1)
+test_data = data.drop(train_data.index)
+
+# KNN imputation
+imputer = KNNImputer(n_neighbors=5)
+train_imputed = imputer.fit_transform(train_data)
+test_imputed = imputer.transform(test_data)
+
+# Interpolation
+train_interpolated = train_data.interpolate(method='linear', axis=0)
+test_interpolated = test_data.interpolate(method='linear', axis=0)
+
+# Fit a machine learning model on training data with imputed values
+# For example:
+from sklearn.linear_model import LinearRegression
+model_imputed = LinearRegression().fit(train_imputed[:, :-1], train_imputed[:, -1])
+
+# Fit a machine learning model on training data with interpolated values
+# For example:
+model_interpolated = LinearRegression().fit(train_interpolated[:, :-1], train_interpolated[:, -1])
+
+# Evaluate the performance of the models on testing data using RMSE
+y_test = test_data.iloc[:, -1]
+y_pred_imputed = model_imputed.predict(test_imputed[:, :-1])
+y_pred_interpolated = model_interpolated.predict(test_interpolated[:, :-1])
+
+rmse_imputed = np.sqrt(mean_squared_error(y_test, y_pred_imputed))
+rmse_interpolated = np.sqrt(mean_squared_error(y_test, y_pred_interpolated))
+
+print("RMSE with KNN imputation:", rmse_imputed)
+print("RMSE with interpolation:", rmse_interpolated)
+
+........................................................................................................................
+
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Load the dataset
+df = pd.read_csv('dataset.csv')
+
+# Split data into training and testing sets
+train_data, test_data = train_test_split(df, test_size=0.2, random_state=42)
+
+# Select the features and target variable
+X_train = train_data.iloc[:, :-1]
+y_train = train_data.iloc[:, -1]
+
+# Create an imputer object and impute the missing values in training data
+imputer = SimpleImputer(strategy='mean')
+X_train_imputed = imputer.fit_transform(X_train)
+
+# Fit a machine learning model on training data with imputed values
+model_imputed = LinearRegression().fit(X_train_imputed, y_train)
+
+# Interpolate missing values in training data
+train_interpolated = train_data.interpolate()
+
+# Fit a machine learning model on training data with interpolated values
+model_interpolated = LinearRegression().fit(train_interpolated.iloc[:, :-1], train_interpolated.iloc[:, -1])
+
+# Evaluate the performance of the models on testing data using RMSE
+X_test = test_data.iloc[:, :-1]
+y_test = test_data.iloc[:, -1]
+y_pred_imputed = model_imputed.predict(imputer.transform(X_test))
+y_pred_interpolated = model_interpolated.predict(test_data.interpolate().iloc[:, :-1])
+rmse_imputed = mean_squared_error(y_test, y_pred_imputed, squared=False)
+rmse_interpolated = mean_squared_error(y_test, y_pred_interpolated, squared=False)
+print('RMSE with mean imputation:', rmse_imputed)
+print('RMSE with linear interpolation:', rmse_interpolated)

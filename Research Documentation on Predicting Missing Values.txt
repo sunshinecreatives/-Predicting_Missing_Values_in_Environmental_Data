@@ -1,0 +1,741 @@
+Just use the negative sign on the column directly. For instance, 
+if your DataFrame has a column "A", then -df["A"] gives the negatives of those values.
+
+import pandas as pn
+file_name = './exmp.txt'
+names = ['class', 'value']
+df = pn.read_csv(file_name, sep=': ', names=names, engine='python')
+-df['value']
+............................................
+df['A'].fillna(df['A'].mean(), inplace=True)
+
+This will fill missing values in column ‘A’ with the mean value of column ‘A’. If you want to fill missing values with median or mode instead of mean, you can do this:
+
+df['A'].fillna(df['A'].median(), inplace=True)
+df['A'].fillna(df['A'].mode()[0], inplace=True)
+...................................................
+
+# create a sample dataframe
+df = pd.DataFrame({'A': [1, 2, np.nan, np.nan, 5]})
+
+# fill missing values using linear interpolation
+df['A'] = df['A'].interpolate()
+
+print(df)
+
+# Fill all NA with 0
+df[['Year', 'Month', 'Day', 'MST ', 'Hpa', 'Temp', 'Dew_point',
+       'rel_humidity', 'wind_dir', 'wind_speed', 'rain_dur', 'rain_amt']] = df[['Year', 'Month', 'Day', 'MST ', 'Hpa', 'Temp', 'Dew_point',
+       'rel_humidity', 'wind_dir', 'wind_speed', 'rain_dur', 'rain_amt']].fillna(0)
+df.head().copy()
+
+.............................................................................
+# mark zero values as missing or NaN
+dataset[[1,2,3,4,5]] = dataset[[1,2,3,4,5]].replace(0, nan)
+# retrieve the numpy array
+values = dataset.values
+# define the imputer
+imputer = SimpleImputer(missing_values=nan, strategy='mean')
+# transform the dataset
+transformed_values = imputer.fit_transform(values)
+# count the number of NaN values in each column
+print('Missing: %d' % isnan(transformed_values).sum())
+
+...................................................................................
+# example of evaluating a model after an imputer transform
+from numpy import nan
+from pandas import read_csv
+from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.model_selection import KFold
+from sklearn.model_selection import cross_val_score
+dataset = read_csv('pima-indians-diabetes.csv', header=None)
+# mark zero values as missing or NaN
+dataset[[1,2,3,4,5]] = dataset[[1,2,3,4,5]].replace(0, nan)
+# split dataset into inputs and outputs
+values = dataset.values
+X = values[:,0:8]
+y = values[:,8]
+# define the imputer
+imputer = SimpleImputer(missing_values=nan, strategy='mean')
+# define the model
+lda = LinearDiscriminantAnalysis()
+# define the modeling pipeline
+pipeline = Pipeline(steps=[('imputer', imputer),('model', lda)])
+# define the cross validation procedure
+kfold = KFold(n_splits=3, shuffle=True, random_state=1)
+# evaluate the model
+result = cross_val_score(pipeline, X, y, cv=kfold, scoring='accuracy')
+# report the mean performance
+print('Accuracy: %.3f' % result.mean())
+
+...............................................................
+from numpy import mean
+from numpy import std
+from pandas import read_csv
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.pipeline import Pipeline
+# load dataset
+url = 'https://raw.githubusercontent.com/jbrownlee/Datasets/master/horse-colic.csv'
+dataframe = read_csv(url, header=None, na_values='?')
+# split into input and output elements
+data = dataframe.values
+ix = [i for i in range(data.shape[1]) if i != 23]
+X, y = data[:, ix], data[:, 23]
+# define modeling pipeline
+model = RandomForestClassifier()
+imputer = SimpleImputer(strategy='mean')
+pipeline = Pipeline(steps=[('i', imputer), ('m', model)])
+# define model evaluation
+cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+# evaluate model
+scores = cross_val_score(pipeline, X, y, scoring='accuracy', cv=cv, n_jobs=-1)
+print('Mean Accuracy: %.3f (%.3f)' % (mean(scores), std(scores)))
+
+...............................................................................................
+# compare statistical imputation strategies for the horse colic dataset
+from numpy import mean
+from numpy import std
+from pandas import read_csv
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.pipeline import Pipeline
+from matplotlib import pyplot
+# load dataset
+url = 'https://raw.githubusercontent.com/jbrownlee/Datasets/master/horse-colic.csv'
+dataframe = read_csv(url, header=None, na_values='?')
+# split into input and output elements
+data = dataframe.values
+ix = [i for i in range(data.shape[1]) if i != 23]
+X, y = data[:, ix], data[:, 23]
+# evaluate each strategy on the dataset
+results = list()
+strategies = ['mean', 'median', 'most_frequent', 'constant']
+for s in strategies:
+	# create the modeling pipeline
+	pipeline = Pipeline(steps=[('i', SimpleImputer(strategy=s)), ('m', RandomForestClassifier())])
+	# evaluate the model
+	cv = RepeatedStratifiedKFold(n_splits=10, n_repeats=3, random_state=1)
+	scores = cross_val_score(pipeline, X, y, scoring='accuracy', cv=cv, n_jobs=-1)
+	# store results
+	results.append(scores)
+	print('>%s %.3f (%.3f)' % (s, mean(scores), std(scores)))
+# plot model performance for comparison
+pyplot.boxplot(results, labels=strategies, showmeans=True)
+pyplot.show()
+
+..........................................................................................
+Implement MICE with `IterativeImputer` from `sklearn`
+# need to enable iterative imputer explicitly since its still experimental
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+
+# Define imputer
+imputer = IterativeImputer(random_state=100, max_iter=10)
+
+Import and View dataset
+
+import pandas as pd
+file_path = "https://raw.githubusercontent.com/selva86/datasets/master/Churn_Modelling_m.csv"
+df = pd.read_csv(file_path)
+df.head()
+
+# Use Numeric Features
+df_train = df.loc[:, ["Balance", "Age", "Exited"]]
+df_train.head()
+
+MICE imputation – How to predict missing values using machine learning in Python
+March 14, 2023
+Selva Prabhakaran
+MICE Imputation, short for ‘Multiple Imputation by Chained Equation’ is an advanced missing data imputation technique that uses multiple iterations of Machine Learning model training to predict the missing values using known values from other features in the data as predictors.
+
+What is MICE Imputation?
+You can impute missing values by predicting them using other features from the dataset.
+
+The MICE or ‘Multiple Imputations by Chained Equations’, aka, ‘Fully Conditional Specification’ is a popular approach to do this. This is quite popular in the R programming language with the `mice` package.
+
+It is currently under experimental implementation in Python via `sklearn` package’s `IterativeImputer`. `fancyimpute` is another nice package that implements this.
+
+How does MICE algorithm work?
+Here is a quick intuition (not the exact algorithm)
+
+1. You basically take the variable that contains missing values as a response ‘Y’ and other variables as predictors ‘X’.
+
+2. Build a model with rows where Y is not missing.
+
+3. Then predict the missing observations.
+
+Do this multiple times by doing random draws of the data and taking the mean of the predictions.
+
+
+
+Above was short intuition about how the MICE algorithm roughly works.
+
+However, the full algorithm is more rigorous and works as follows. The following work by Azur et al talks about it in detail.
+
+The MICE Algorithm (Step-by-step)
+For simplicity, let’s assume the dataset contains only 3 columns: A, B, C each of which contains missing values spread randomly.
+
+The following steps are performed to perform MICE imputation:
+
+1. Decide on the number of iterations (k) and create as many copies of the raw dataset.
+
+DEEP DIVE INTO TIME SERIES FORECASTING PART 1 - STATISTICAL MODELS
+Do You Want Learn Statistical Models In Time Series Forecasting?
+
+Join Our Session This Sunday And Learn How To Create, Evaluate And Interpret Different Types Of Statistical Models Like Linear Regression, Logistic Regression, And ANOVA.
+
+Yes I Want To Learn, Book My Seat
+2. In each column, replace the missing values with an approximate value like the ‘mean’, based on the non-missing values in that column. This is a temporary replacement. At the end of this step, there should be no missing values.
+
+3. For the specific column you want to impute, eg: columm A alone, change the imputed value back to missing.
+
+
+
+4. Now, build a regression model to predict A using (B and C) as predictors. For this model, only the non-missing rows of A are included. So, A is the response, while, B and C are predictors. Use this model to predict the missing values in A.
+
+5. Repeat steps 2-4 for columns B and C as well.
+
+Completing 1 round of predictions for columns A, B and C forms 1 iteration.
+
+Do this for the ‘k’ iterations you have predecided. _With each iteration the predicted value of the temporary prediction for each column will keep improving._ So, there is a continuity between the successive iteration, hence the name ‘chained’.
+
+By the end of the ‘kth iteration, the latest prediction (imputation) for each of the variables will be retained as the final imputation.
+
+Implement MICE with `IterativeImputer` from `sklearn`
+Import the `IterativeImputer` and enable it.
+
+
+
+
+# need to enable iterative imputer explicitly since its still experimental
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
+Initialize the `IterativeImputer`.
+
+The default value for the number of iterations is specified using the `max_iter` argument and is taken as 10. You might want to increase this if there are many missing values and takes more iterations to be accurate.
+
+# Define imputer
+imputer = IterativeImputer(random_state=100, max_iter=10)
+
+Import and View dataset
+
+import pandas as pd
+file_path = "https://raw.githubusercontent.com/selva86/datasets/master/Churn_Modelling_m.csv"
+df = pd.read_csv(file_path)
+df.head()
+
+
+
+Let's take only the numeric features for training. This is not a required step though.
+
+# Use Numeric Features
+df_train = df.loc[:, ["Balance", "Age", "Exited"]]
+df_train.head()
+
+
+
+Train the imputer model.
+
+# fit on the dataset
+imputer.fit(df_train)
+
+Predict the missing values. This is done using the `transform` method.
+
+df_imputed = imputer.transform(df_train)
+df_imputed[:10]
+
+# Replace with imputed values
+df.loc[:, ["Balance", "Age", "Exited"]] = df_imputed
+df.head(10)
+................................................
+LINEAR INTERPOLATION
+import numpy as np
+import pandas as pd
+# class and ticket prices.
+fare = {'first_class':100, 
+        'second_class':np.nan, 
+        'third_class':60, 
+        'open_class':20}
+Convert it to a pandas series object to make interpolation convenient.
+
+# store as pandas series
+ser = pd.Series(fare)
+ser
+first_class     100.0
+second_class      NaN
+third_class      60.0
+open_class       20.0
+dtype: float64
+Now you can use ser.interpolate() to predict the missing value. 
+By default, ser.interpolate() will do a linear interpolation.
+
+
+#Implement linear interpolation
+ser.interpolate(method='linear')
+first_class     100.0
+second_class     80.0
+third_class      60.0
+open_class       20.0
+dtype: float64
+linear interpolation may be more suitable if you assume the relationship between x (index) 
+and y (value) to be linear. If not, you might want to try spline and cubicspline interpolation as well.
+
+
+Spline interpolation
+
+To use spline interpolation you need to make sure the index is reset to start from 0,1,2.. etc. So do a reset_index first, then do interpolate.
+
+# order = 2
+ser.reset_index(drop=True).interpolate(method='spline', order=2)
+0    100.000000
+1     86.666667
+2     60.000000
+3     20.000000
+dtype: float64
+Cubic spline
+
+# cubic spline
+ser.reset_index(drop=True).interpolate(method='cubicspline')
+0    100.000000
+1     86.666667
+2     60.000000
+3     20.000000
+dtype: float64
+
+........................................................................................
+Here is the final solution I worked out.
+
+numerical_columns = [c for c in df.columns if df[c].dtype.name != 'object']
+
+df[df[numerical_columns] < 0].count() # to deal with int to str conversion problem
+
+.........................................................................................
+
+Linear Interpolation in the Forwarding Direction
+The linear method ignores the index and treats missing values as equally spaced, and finds the best
+point to fit the missing value after previous points.
+If the missing value is at the first index, then it will leave it as Nan. 
+let’s apply dataframe.interpolate to our data frame.
+
+df.interpolate(method ='linear', limit_direction ='forward')
+
+df['C'].interpolate(method="linear")
+
+a.interpolate(method="polynomial", order=2)
+a.interpolate(method="pad", limit=2)
+
+
+Introduction
+This beginner’s tutorial is about interpolation. Interpolation in Python is a technique used to estimate unknown data points between two known data points. In Python, Interpolation is a technique mostly used to impute missing values in the data frame or series while preprocessing data. You can use this method to estimate missing data points in your data using Python in Power BI or machine learning algorithms. Interpolation is also used in Image Processing when expanding an image, where you can estimate the pixel value with the help of neighboring pixels.
+
+interpolation values
+Learning Objectives
+
+In this tutorial on data science and machine learning, we will learn to handle missing data and preprocess data before using it in the machine learning model.
+We will also learn about handling missing data with python and python pandas library, i.e., pandas interpolate and scipy library.
+This article was published as a part of the Data Science Blogathon.
+
+Table of Contents
+When to Use Interpolation?
+Using Interpolation to Fill Missing Values in Series Data
+Using Interpolation to Fill Missing Values in Pandas DataFrame
+Filling Missing Values in Time-Series Data
+Syntax for Filling Missing Values in Forwarding and Backward Methods
+Conclusion
+When to Use Interpolation?
+We can use Interpolation to find missing value/null with the help of its neighbors. When imputing missing values with average does not fit best, we have to move to a different technique, and the technique most people find is Interpolation.
+
+Interpolation is mostly used while working with time-series data because, in time-series data, we like to fill missing values with the previous one or two values. for example, suppose temperature, now we would always prefer to fill today’s temperature with the mean of the last 2 days, not with the mean of the month. We can also use Interpolation for calculating the moving averages.
+
+
+Become a Full Stack Data Scientist
+Transform into an expert and significantly impact the world of data science.
+Using Interpolation to Fill Missing Values in Series Data
+Pandas series is a one-dimensional array that is capable of storing elements of various data types like lists. We can easily create a series with the help of a list, tuple, or dictionary. To perform all Interpolation methods we will create a pandas series with some NaN values and try to fill missing values with some interpolated values by the implementation of the interpolate methods or some other different methods of Interpolation.
+
+import pandas as pd
+import numpy as np
+a = pd.Series([0, 1, np.nan, 3, 4, 5, 7])
+Linear Interpolation
+Linear Interpolation simply means to estimate a missing value by connecting dots in a straight line in increasing order. In short, It estimates the unknown value in the same increasing order from previous values. The default method used by Interpolation is Linear. So while applying it, we need not specify it.
+
+
+The output you can observe as
+
+0    0.0
+1    1.0
+2    2.0
+3    3.0
+4    4.0
+5    5.0
+6    7.0
+Hence, Linear interpolation works in the same order. Remember that it does not interpret using the index; it interprets values by connecting points in a straight line.
+
+Polynomial Interpolation
+In Polynomial Interpolation, you need to specify an order. It means that polynomial interpolation fills missing values with the lowest possible degree that passes through available data points. The polynomial Interpolation curve is like the trigonometric sin curve or assumes it like a parabola shape.
+
+a.interpolate(method="polynomial", order=2)
+If you pass an order as 1, then the output will be similar to linear because the polynomial of order 1 is linear.
+
+Interpolation Through Padding
+Interpolation with the help of padding simply means filling missing values with the same value present above them in the dataset. If the missing value is in the first row, then this method will not work. While using this technique, you also need to specify the limit, which means how many NaN values to fill.
+
+So, if you are working on a real-world project and want to fill missing values with previous values, you have to specify the limit as to the number of rows in the dataset.
+
+a.interpolate(method="pad", limit=2)
+You will see the output coming as below.
+
+0    0.0
+1    1.0
+2    1.0
+3    3.0
+4    4.0
+5    5.0
+6    7.0
+The missing data is replaced by the same value as present before to it.
+
+Using Interpolation to Fill Missing Values in Pandas DataFrame
+DataFrame is a widely used python data structure that stores the data in the form of rows and columns. When performing data analysis we always store the data in a table which is known as a data frame. The dropna() function is generally used to drop all the null values in a dataframe. A data frame can contain huge missing values in many columns, so let us understand how we can use Interpolation to fill in missing values in the data frame.
+
+
+Become a Full Stack Data Scientist
+Transform into an expert and significantly impact the world of data science.
+(Note: To save changes, you can use inplace = True in python )
+
+import pandas as pd
+# Creating the dataframe
+df = pd.DataFrame({"A":[12, 4, 7, None, 2],
+                   "B":[None, 3, 57, 3, None],
+                   "C":[20, 16, None, 3, 8],
+                   "D":[14, 3, None, None, 6]})
+interpolation of missing values
+Linear Interpolation in the Forwarding Direction
+The linear method ignores the index and treats missing values as equally spaced, and finds the best point to fit the missing value after previous points. 
+If the missing value is at the first index, then it will leave it as Nan. let’s apply dataframe.interpolate to our data frame.
+
+df.interpolate(method ='linear', limit_direction ='forward')
+the output you can observe in the below figure.
+
+linear interpolation forwarding
+If you only want to perform interpolation in a single column, then it is also simple and follows the below code.
+
+df['C'].interpolate(method="linear")
+Linear Interpolation in Backward Direction (bfill)
+Now, the method is the same, only the order in which we want to perform changes. 
+Now the method will work from the end of the data frame or understand it as a bottom-to-top approach.
+
+df.interpolate(method ='linear', limit_direction ='backward')
+............................................................................................
+
+SimpleImputer class in Scikit-Learn. Let me import this class.
+
+from sklearn.impute import SimpleImputer
+Now, I’m going to create an instantiate from this class. Since missing data is indicated by nan, 
+let’s write missing_values ​​= np.nan and mean in the strategy parameter.
+
+imp_mean = SimpleImputer(missing_values=np.nan, strategy='mean')
+Our dataset is ready to fit. Our dataset is data frame. Let’s convert the dataset to 
+a Numpy array while using the fit method. Remember, Scikit-Learn likes to work with NumPy arrays.
+
+imp_mean = imp_mean.fit(df.values)
+Now, let’s apply this imputer to our dataset with the transform method.
+
+imputed_data = imp_mean.transform(df.values)
+Now let’s see the dataset.
+
+imputed_data
+#Output:
+array([[ 1. ,  2. ,  3. ,  4. ],
+       [ 5. ,  6. ,  7. ,  7.5],
+       [ 9. , 10. ,  5. , 11. ]])
+
+...............................................................................................................................................
+
+# Split data into two groups based on whether they have missing values or not
+df_with_missing_values = df[df.isnull().any(axis=1)]
+df_without_missing_values = df[~df.isnull().any(axis=1)]
+
+print("Data with missing values:")
+print(df_with_missing_values.head())
+...............................................................................................
+corel = df[['Hpa', 'Temp', 'rel_humidity', 'wind_speed']].corr()
+fig, ax = plt.subplots(figsize=(12, 7))
+sns.heatmap(corel, linewidths = 0.5, annot = True)
+
+....................................................................................................
+sns.regplot(x = "Temp",
+y = "rel_humidity",
+data = df)
+plt.show()
+
+......................................................................................
+# descriptive statistical analysis for atmospheric pressure
+df_hpa = df['Hpa']
+df_hpa.describe()
+
+..............................................................................................
+# returning 0 and negative values in columns
+df_new = df[df <= 0].dropna(axis = 0, how = 'all')
+df_new.head()
+
+# comparing sizes of data frames
+print("Old data frame length:", len(df),
+      "\nNew data frame length:",
+      len(df_new),
+      "\nNumber of rows with at least 1 NA value: ",
+      (len(df)-len(df_new)))
+
+......................................................................................
+# count the number of missing values for each column
+df_missing = (df[['Year', 'Month', 'Day', 'MST ', 'Hpa', 'Temp', 'Dew_point',
+       'rel_humidity', 'wind_dir', 'wind_speed', 'rain_dur', 'rain_amt']] <= 0).sum()
+# report the results
+print(df_missing)
+
+............................................................................................
+# Split data into two groups based on whether they have missing values or not
+df_with_missing_values = df[df.isnull().any(axis=1)]
+df_without_missing_values = df[~df.isnull().any(axis=1)]
+
+print("Data with missing values:")
+print(df_with_missing_values.head())
+print("\nData without missing values:")
+print(df_without_missing_values.head())
+
+......................................................................................
+
+df[['a', 'b']] = df[['a','b']].fillna(value=0)
+
+df.fillna({'A': 'NA', 'B': 'NA'}, inplace=True)
+
+df[['a', 'b']].fillna(value=0, inplace=True)
+
+import pandas as pd
+
+df = pd.DataFrame({'A': [0, 1, 2], 'B': [3, None, 5]})
+print(df)
+
+# Replace all occurrences of None with -1
+df.replace(to_replace=None, value=-1, inplace=True)
+print(df)
+................................................................
+You can use the fillna() function to replace NaN values in a pandas DataFrame. Here are three common ways to use this function:
+
+Method 1: Fill NaN Values in One Column with Mean
+
+df['col1'] = df['col1'].fillna(df['col1'].mean())
+Method 2: Fill NaN Values in Multiple Columns with Mean
+
+df.fillna(df.mean())
+Method 3: Fill NaN Values in One Column with Median
+
+df['col1'] = df['col1'].fillna(df['col1'].median())
+................................................................................
+from sklearn.impute import SimpleImputer
+# retrieve the numpy array
+values = df_with_missing_values.values
+# define the imputer
+imputer = SimpleImputer(missing_values=nan, strategy='median')
+# transform the dataset
+transformed_values = imputer.fit_transform(values)
+# count the number of NaN values in each column
+print('Missing: %d' % isnan(transformed_values).sum())
+...............................................................................
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+
+plt.style.use('seaborn-poster')
+............................................................
+#visuals with seaborn
+
+Hpa vs pivot[year, month or day](line plot)
+Hpa vs temp, rel_hum, wind_speed, rain_amt(reg, scatterplot)
+
+temp vs pivot[year, month or day](line plot)
+temp vs wind_speed, rel_humid, rain_amt(reg, scatterplot)
+
+rel_hum vs pivot[year, month or day](line plot)
+rel_hum vs wind_speed, rain_amt(reg, scatterplot)
+
+wind_speed vs pivot[year, month or day](line plot)
+wind_speed vs rain_amt(reg, scatterplot)
+...................................................................
+# Select only columns with null values
+test_data_cols = df.columns[test_data.any()].tolist()
+
+# Create new dataframe with only columns with null values
+df_test = df[test_data_cols]
+
+print(df_test)
+dfmv
+[-1, -1.1]
+
+.............................................
+# create the y_train
+# "y_train" means "Rows from the test_data_with_nulls dataframe with Non NULL values"
+y_train = test_data_with_nulls
+
+
+
+............................................
+
+import pandas as pd
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+# Load the data
+data = pd.read_csv('housing_data.csv')
+
+# Split the data into training and test sets
+train, test = train_test_split(data, test_size=0.2, random_state=42)
+
+# Define the features and target variables
+features = ['sq_ft', 'price']
+target_bedrooms = 'bedrooms'
+target_bathrooms = 'bathrooms'
+
+# Train the model to predict the number of bedrooms
+bedroom_model = DecisionTreeRegressor(random_state=42)
+bedroom_model.fit(train[features], train[target_bedrooms])
+
+# Use the model to predict the missing values in the training and test sets
+train.loc[train[target_bedrooms].isnull(), target_bedrooms] = bedroom_model.predict(train.loc[train[target_bedrooms].isnull(), features])
+test.loc[test[target_bedrooms].isnull(), target_bedrooms] = bedroom_model.predict(test.loc[test[target_bedrooms].isnull(), features])
+
+# Train the model to predict the number of bathrooms
+bathroom_model = DecisionTreeRegressor(random_state=42)
+bathroom_model.fit(train[features], train[target_bathrooms])
+
+# Use the model to predict the missing values in the training and test sets
+train.loc[train[target_bathrooms].isnull(), target_bathrooms] = bathroom_model.predict(train.loc[train[target_bathrooms].isnull(), features])
+test.loc[test[target_bathrooms].isnull(), target_bathrooms] = bathroom_model.predict(test.loc[test[target_bathrooms].isnull(), features])
+
+# Evaluate the performance of the models
+train_pred_bedrooms = bedroom_model.predict(train[features])
+test_pred_bedrooms = bedroom_model.predict(test[features])
+train_rmse_bedrooms = mean_squared_error(train[target_bedrooms], train_pred_bedrooms, squared=False)
+test_rmse_bedrooms = mean_squared_error(test[target_bedrooms], test_pred_bedrooms, squared=False)
+print(f"RMSE for number of bedrooms in train set: {train_rmse_bedrooms:.2f}")
+print(f"RMSE for number of bedrooms in test set: {test_rmse_bedrooms:.2f}")
+
+train_pred_bathrooms = bathroom_model.predict(train[features])
+test_pred_bathrooms = bathroom_model.predict(test[features])
+train_rmse_bathrooms = mean_squared_error(train[target_bathrooms], train_pred_bathrooms, squared=False)
+test_rmse_bathrooms = mean_squared_error(test[target_bathrooms], test_pred_bathrooms, squared=False)
+print(f"RMSE for number of bathrooms in train set: {train_rmse_bathrooms:.2f}")
+print(f"RMSE for number of bathrooms in test set: {test_rmse_bathrooms:.2f}")
+
+
+..........................................................................
+Scaler = MinMaxScaler
+smoothing_window_size = 200
+
+for di in range (0,1000,smoothing_window_size):
+    Scaler.fit(test_data[di:di+smoothing_window_size,:])
+    test_data[di:di+smoothing_window_size,:] = Scaler.transform(test_data[di:di+smoothing_window_size,:])
+......................................................................................
+# Train the model to predict the missing values of atmospheric pressure
+atm_pressure_model = DecisionTreeRegressor(random_state=42)
+atm_pressure_model.fit(train[features], train[target_atm_pressure ])
+
+# Impute missing values using SimpleImputer
+imputer = SimpleImputer(strategy = 'mean')
+
+train[target_atm_pressure] = imputer.fit_transform(train[[target_atm_pressure]])
+train[target_temp] = imputer.fit_transform(train[[target_temp]])
+train[target_rel_hum ] = imputer.fit_transform(train[[target_rel_hum]])
+train[target_wind_speed ] = imputer.fit_transform(train[[target_wind_speed]])
+
+
+Separating the columns with Null Values from the Dataframe
+# Split data into two groups based on whether they have missing values or not 
+'''test_data - dataset with missing null values & test_data_1 - dataframe without missing values'''
+​
+df1 = df[df.isnull().any(axis = 1)]
+df2 = df[~ df.isnull().any(axis = 1)]
+​
+test_data = pd.DataFrame(df1)
+test_data.head()
+
+test_data_1 = pd.DataFrame(df2)
+test_data_1.head()
+.............................................................
+# get a boolean mask of where null values are located
+mask = test_data.isnull()
+
+# select only the columns that have null values
+test_data_with_nulls = test_data.loc[:, mask.any()]
+print(test_data_with_nulls)
+
+# replacing the infinite to finite number
+df[:] = np.nan_to_num(df)
+df.replace([np.inf, -np.inf], np.nan, inplace=True)
+
+................................................................
+# Define the features and target variables
+features = ['Hpa', 'Temp', 'Dew_point',
+       'rel_humidity', 'wind_dir', 'wind_speed', 'rain_dur', 'rain_amt']
+
+target_atm_pressure = 'Hpa'
+target_temp = 'Temp'
+target_rel_hum = 'rel_humidity'
+target_wind_speed = 'wind_speed'
+
+
+......................................................
+The SciPy library provides functions for computing and manipulating Gaussian distributions, 
+including probability density function (PDF), cumulative distribution function (CDF), and random variable generation.
+
+Gaussian mixture models (GMMs) are another widely used algorithm that assumes that the data points are generated from a mixture of Gaussian distributions.
+............................................................
+from sklearn import preprocessing
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+import sklearn
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import scale
+from sklearn.preprocessing import MinMaxScaler
+...............................................................
+imputed_df.loc[imputed_df.Hpa, 'Hpa'] = y_preds
+#y_preds = pd.DataFrame(data = preds_LR, columns = ['Hpa'])
+#y_preds[:5]
+
+https://forms.gle/URCgPVcH6rVZ8RHA7
+
+https://docs.google.com/forms/d/e/1FAIpQLSepQ33uWCA3maBcRgOn-Z25WZmxEhkC2NLlOfEpCLQ8k-68zg/viewform?usp=pp_url
+
+
+...........................................................
+
+https://contra.com/s/rLmkbsss-data-science-and-analytics
+
+https://contra.com/s/oQO6WsbE-data-analytics-expert?justPublished=true&justUpdated=false
+
+
+
+
+
+As a data analyst, my specific deliverables will depend on the project I am working on and the needs of the clients. However, some common deliverables that I may be responsible for include:
+
+1. Data reports: I will be required to create reports that summarize my findings and provide insights based on the data analyzed. These reports will be clear, concise, and visually appealing.
+
+2. Data visualizations: I may need to create charts, graphs, and other visualizations to help stakeholders understand the data and the insights that can be gleaned from it. The visualizations will be easy to understand and will accurately represent the data.
+
+3. Data models: I will be responsible for building models that can be used to make predictions or guide decision-making based on the data. These models will be accurate and reliable and will be able to handle large amounts of data.
+
+4. Recommendations: I may need to provide recommendations based on my analysis of the data. These recommendations will be actionable and will be based on solid evidence and analysis.
+
+5. Presentations: I may need to present my findings to stakeholders in a clear and engaging way. My presentations will be tailored to the audience and will effectively communicate the insights and recommendations based on the data.
+
+Overall, my deliverables as a data analyst will depend on the specific project I will be working on and the needs of the clients. 
